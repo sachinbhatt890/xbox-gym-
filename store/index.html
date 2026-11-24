@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>X-BOX Store: stock and sales</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<meta name="theme-color" content="#080C0D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X-BOX Store">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEEDEB; --surface:#FFFFFF; --sunk:#F5F4F2; --ink:#16171A; --muted:#5F6066; --line:#DAD8D5;
+  --brand:#D8261C; --brand-tint:#FBE4E2;
+  --green:#1E8A4C; --green-tint:#DDF1E4; --amber:#9A6A00; --amber-tint:#FBEFCC;
+  --red:#A51D16; --red-tint:#F6DCD9; --grey-tint:#E6E5E3;
+  --top:#080C0D; --on-top:#F2F1EF;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0F1012; --surface:#191A1D; --sunk:#141517; --ink:#ECEBE8; --muted:#A1A1A6; --line:#2C2D31;
+  --brand:#E2372C; --brand-tint:#3A1715; --green:#5BCB8A; --green-tint:#173326; --amber:#F2B632; --amber-tint:#3A2E10;
+  --red:#FF7A70; --red-tint:#3D1C1A; --grey-tint:#26272B; color-scheme:dark;}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+h1,h2,h3,.cond{font-family:"Barlow Condensed",Barlow,sans-serif;letter-spacing:.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none!important}
+/* top bar */
+.top{background:var(--top);color:var(--on-top);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;position:sticky;top:0;z-index:20}
+.top-in{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Barlow Condensed";font-weight:700;font-size:22px;white-space:nowrap;margin-right:auto;color:inherit;text-decoration:none}
+.brand img{height:34px;width:auto;border-radius:6px}
+.brand b{color:#E2372C}
+.branchsel{display:flex;background:rgba(255,255,255,.08);border-radius:10px;padding:3px}
+.branchsel button{border:0;background:none;color:var(--on-top);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:15px}
+.branchsel button[aria-pressed="true"]{background:#E2372C;color:#fff}
+.uchip{display:flex;align-items:center;gap:8px}
+.uav{width:32px;height:32px;border-radius:50%;background:#E2372C;color:#fff;display:grid;place-items:center;font-weight:700}
+.uchip small{display:block;opacity:.7;font-size:12px;line-height:1.1}
+.uchip .un{line-height:1.15;font-size:14px}
+.tbtn{background:transparent;border:1px solid rgba(255,255,255,.28);color:var(--on-top);border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
+.tabs{max-width:1240px;margin:10px auto 0;display:flex;gap:6px;overflow-x:auto}
+.tabs button{border:0;background:rgba(255,255,255,.06);color:var(--on-top);padding:9px 16px;border-radius:10px;cursor:pointer;font-weight:600;white-space:nowrap}
+.tabs button[aria-pressed="true"]{background:var(--on-top);color:var(--top)}
+@media (max-width:640px){.uchip .un{display:none}.brand span.full{display:none}.branchsel{order:5;width:100%}.branchsel button{flex:1}}
+/* layout */
+main{max-width:1240px;margin:0 auto;padding:18px 16px 60px}
+.vt{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;justify-content:space-between;margin-bottom:14px}
+.vt h1{margin:0;font-size:32px;line-height:1.1}
+.vt p{margin:4px 0 0;color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;text-decoration:none;line-height:1.2}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.sm{padding:6px 10px;font-size:14px;border-radius:8px}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.panel+.panel{margin-top:16px}
+.ph{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ph h2{margin:0;font-size:22px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi .l{color:var(--muted);font-size:14px;font-weight:600}
+.kpi .v{font-family:"Barlow Condensed";font-weight:700;font-size:34px;line-height:1.1;margin-top:2px}
+.kpi .s{color:var(--muted);font-size:14px}
+.kpi.warn .v{color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;justify-content:space-between;gap:10px;padding:10px 16px;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.list .m{color:var(--muted);font-size:14px}
+.empty{padding:26px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+/* filters */
+.fbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.fbar input[type=search],.fbar select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sunk)}
+.fbar input[type=search]{flex:1 1 200px;min-width:0}
+.chip{border:1px solid var(--line);background:var(--sunk);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+/* tables */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 12px;text-align:left;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--muted);font-weight:600;background:var(--sunk);border-top:0;white-space:nowrap}
+td.r,th.r{text-align:right}
+td .m{color:var(--muted);font-size:13px}
+tfoot td{font-weight:700;background:var(--sunk)}
+.tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+.t-green{background:var(--green-tint);color:var(--green)}
+.t-red{background:var(--red-tint);color:var(--red)}
+.t-amber{background:var(--amber-tint);color:var(--amber)}
+.t-grey{background:var(--grey-tint);color:var(--muted)}
+.t-brand{background:var(--brand-tint);color:var(--brand)}
+.rowacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+/* cards (phone) */
+.cards{display:none}
+@media (max-width:760px){.tw.cardable{display:none}.cards{display:block}}
+.card{padding:12px 16px;border-top:1px solid var(--line)}
+.card:first-child{border-top:0}
+.card .t{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.card .d{color:var(--muted);font-size:14px;margin-top:2px}
+.card .rowacts{justify-content:flex-start;margin-top:8px}
+/* dialogs */
+dialog{border:0;border-radius:16px;padding:0;width:min(620px,calc(100vw - 20px));max-height:calc(100vh - 30px);background:var(--surface);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(8,12,13,.55)}
+.dh{display:flex;justify-content:space-between;gap:10px;padding:18px 20px 8px}
+.dh h2{margin:0;font-size:26px}
+.dh p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.x{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:var(--muted)}
+.db{padding:8px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.df{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px 18px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field>span{font-weight:600;font-size:14px}
+.field>span small{color:var(--muted);font-weight:500}
+.field input,.field select,.field textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);width:100%}
+.field textarea{min-height:60px;resize:vertical}
+.field .hint{color:var(--muted);font-size:13px}
+.bad{border-color:var(--red)!important;box-shadow:0 0 0 3px var(--red-tint)}
+.err{grid-column:1/-1;color:var(--red);font-weight:600;min-height:0}
+.err:empty{display:none}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{flex:1 1 auto}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);cursor:pointer;font-weight:600;white-space:nowrap}
+.seg input:checked+span{border-color:var(--brand);background:var(--brand-tint);color:var(--brand)}
+.seg input:focus-visible+span{outline:2px solid var(--brand)}
+.note{grid-column:1/-1;margin:0;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:600}
+.note.warn{background:var(--amber-tint);color:var(--amber)}
+.note.bad2{background:var(--red-tint);color:var(--red)}
+.note.ok{background:var(--green-tint);color:var(--green)}
+@media (max-width:560px){.db{grid-template-columns:1fr}}
+/* login */
+.gate{position:fixed;inset:0;z-index:60;background:var(--top);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:8vh 16px 24px}
+.gcard{width:min(420px,100%);background:var(--surface);border-radius:18px;padding:26px 24px}
+.gcard .gb{display:flex;align-items:center;gap:10px;font-family:"Barlow Condensed";font-weight:700;font-size:24px;margin-bottom:12px}
+.gcard .gb img{height:38px;border-radius:6px}
+.gcard h2{margin:0 0 4px;font-size:24px}
+.gcard p{color:var(--muted);margin:0 0 14px}
+.gform{display:grid;gap:12px}
+.gform .btn{padding:12px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--top);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;z-index:80;max-width:calc(100vw - 30px);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.banner{background:var(--amber-tint);color:var(--amber);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-weight:600}
+.hrow{display:grid;grid-template-columns:90px 1fr auto;gap:12px;padding:10px 16px;border-top:1px solid var(--line)}
+.hrow:first-child{border-top:0}
+.hrow ul{margin:3px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+@media (max-width:600px){.hrow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="../"><img src="../icons/icon-192.png" alt=""><span><b>X-BOX</b> <span class="full">THE GYM · </span>Store</span></a>
+    <div class="branchsel" role="group" aria-label="Branch">
+      <button type="button" data-br="" aria-pressed="true">Both branches</button>
+      <button type="button" data-br="Jhankat" aria-pressed="false">Jhankat</button>
+      <button type="button" data-br="Khatima" aria-pressed="false">Khatima</button>
+    </div>
+    <div class="uchip hidden" id="uchip"><span class="uav" id="u-av"></span><span class="un"><b id="u-name"></b><small id="u-role"></small></span><button class="tbtn" id="u-out" type="button">Log out</button></div>
+  </div>
+  <nav class="tabs" aria-label="Pages">
+    <button type="button" data-v="ov" aria-pressed="true">Overview</button>
+    <button type="button" data-v="prod" aria-pressed="false">Products &amp; stock</button>
+    <button type="button" data-v="sales" aria-pressed="false">Sales</button>
+    <button type="button" data-v="hist" aria-pressed="false" class="hidden" id="tab-hist">History</button>
+    <a class="tbtn" href="../" style="margin-left:auto;align-self:center">Gym dashboard →</a>
+  </nav>
+</header>
+<main id="main"></main>
+
+<!-- product dialog -->
+<dialog id="d-prod"><form id="f-prod" novalidate>
+  <div class="dh"><div><h2 id="prod-title">Add product</h2><p>One row per product per branch. If the same product is in both gyms, add it once for each branch.</p></div><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="db">
+    <label class="field full"><span>Product name</span><input name="name" autocomplete="off" placeholder="Whey protein 1 kg, chocolate"></label>
+    <label class="field"><span>Category</span><input name="category" list="cats" autocomplete="off" placeholder="Protein"></label>
+    <div class="field"><span>Gym branch</span><div class="seg"><label><input type="radio" name="branch" value="Jhankat"><span>Jhankat</span></label><label><input type="radio" name="branch" value="Khatima"><span>Khatima</span></label></div></div>
+    <label class="field"><span>Selling price (₹ each)</span><input name="price" type="number" min="0" step="1" inputmode="numeric"></label>
+    <label class="field"><span>Cost price <small>(optional)</small></span><input name="cost" type="number" min="0" step="1" inputmode="numeric"></label>
+    <label class="field"><span>Quantity in stock</span><input name="qty" type="number" min="0" step="1" inputmode="numeric"></label>
+    <label class="field"><span>Expiry date</span><input name="expiry" type="date"></label>
+    <label class="field full"><span>Notes <small>(optional: batch number, supplier, flavour)</small></span><input name="notes" autocomplete="off"></label>
+    <div class="err"></div>
+  </div>
+  <div class="df"><button type="button" class="btn quiet owner-only hidden" id="prod-del" style="margin-right:auto">Delete product</button><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary">Save product</button></div>
+</form></dialog>
+<datalist id="cats"><option>Protein</option><option>Peanut butter</option><option>Creatine</option><option>Mass gainer</option><option>Pre-workout</option><option>BCAA / EAA</option><option>Multivitamin</option><option>Fish oil</option><option>Protein bar</option><option>Shaker / accessories</option><option>Other</option></datalist>
+
+<!-- sale dialog -->
+<dialog id="d-sale"><form id="f-sale" novalidate>
+  <div class="dh"><div><h2 id="sale-title">New sale</h2><p id="sale-sub">Stock goes down automatically when you save.</p></div><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="db">
+    <div class="field full"><span>Gym branch</span><div class="seg"><label><input type="radio" name="branch" value="Jhankat"><span>Jhankat</span></label><label><input type="radio" name="branch" value="Khatima"><span>Khatima</span></label></div></div>
+    <label class="field full"><span>Product</span><select name="product"></select><span class="hint" id="sale-pinfo"></span></label>
+    <label class="field"><span>Quantity</span><input name="qty" type="number" min="1" step="1" value="1" inputmode="numeric"></label>
+    <label class="field"><span>Price (₹ each)</span><input name="price" type="number" min="0" step="1" inputmode="numeric"></label>
+    <p class="note ok" id="sale-total"></p>
+    <label class="field"><span>Customer name</span><input name="customer" autocomplete="off" list="custs"></label>
+    <label class="field"><span>Mobile <small>(optional)</small></span><input name="phone" type="tel" inputmode="numeric" autocomplete="off"></label>
+    <label class="field"><span>Sale date</span><input name="date" type="date"></label>
+    <div class="field"><span>Payment</span><div class="seg"><label><input type="radio" name="status" value="paid"><span>Paid</span></label><label><input type="radio" name="status" value="part"><span>Part paid</span></label><label><input type="radio" name="status" value="unpaid"><span>Unpaid</span></label></div></div>
+    <label class="field pay-only"><span>Amount received (₹)</span><input name="received" type="number" min="0" step="1" inputmode="numeric"></label>
+    <div class="field pay-only"><span>Mode of payment</span><div class="seg"><label><input type="radio" name="mode" value="Cash"><span>Cash</span></label><label><input type="radio" name="mode" value="UPI"><span>Online (UPI)</span></label><label><input type="radio" name="mode" value="Card"><span>Card</span></label><label><input type="radio" name="mode" value="Split"><span>Cash + online</span></label></div></div>
+    <label class="field split-only hidden"><span>Cash part (₹)</span><input name="cash" type="number" min="0" step="1" inputmode="numeric"></label>
+    <label class="field split-only hidden"><span>Online part (₹)</span><input name="online" type="number" min="0" step="1" inputmode="numeric"></label>
+    <p class="note warn hidden" id="sale-bal"></p>
+    <label class="field full"><span>Notes <small>(optional)</small></span><input name="notes" autocomplete="off"></label>
+    <div class="err"></div>
+  </div>
+  <div class="df"><button type="button" class="btn quiet owner-only hidden" id="sale-del" style="margin-right:auto">Delete sale</button><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary">Save sale</button></div>
+</form></dialog>
+<datalist id="custs"></datalist>
+
+<!-- payment dialog -->
+<dialog id="d-pay"><form id="f-pay" novalidate>
+  <div class="dh"><div><h2 id="pay-title">Record payment</h2><p id="pay-sub"></p></div><button type="button" class="x" data-close aria-label="Close">×</button></div>
+  <div class="db">
+    <label class="field"><span>Amount received (₹)</span><input name="amount" type="number" min="1" step="1" inputmode="numeric"></label>
+    <label class="field"><span>Payment date</span><input name="date" type="date"></label>
+    <div class="field full"><span>Mode of payment</span><div class="seg"><label><input type="radio" name="mode" value="Cash"><span>Cash</span></label><label><input type="radio" name="mode" value="UPI"><span>Online (UPI)</span></label><label><input type="radio" name="mode" value="Card"><span>Card</span></label><label><input type="radio" name="mode" value="Split"><span>Cash + online</span></label></div></div>
+    <label class="field split-only hidden"><span>Cash part (₹)</span><input name="cash" type="number" min="0" step="1" inputmode="numeric"></label>
+    <label class="field split-only hidden"><span>Online part (₹)</span><input name="online" type="number" min="0" step="1" inputmode="numeric"></label>
+    <div class="err"></div>
+  </div>
+  <div class="df"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary">Save payment</button></div>
+</form></dialog>
+
+<div class="gate hidden" id="gate"><div class="gcard">
+  <div class="gb"><img src="../icons/icon-192.png" alt=""><span><b style="color:#E2372C">X-BOX</b> Store</span></div>
+  <h2>Log in</h2><p>Use the same email and password as the gym dashboard.</p>
+  <p class="err" id="g-msg" style="color:var(--red);font-weight:600"></p>
+  <form class="gform" id="g-login" novalidate>
+    <label class="field"><span>Email</span><input name="email" type="email" autocomplete="username"></label>
+    <label class="field"><span>Password</span><input name="password" type="password" autocomplete="current-password"></label>
+    <div class="err"></div>
+    <button class="btn primary" type="submit">Log in</button>
+  </form>
+</div></div>
+
+<script>
+(()=>{
+"use strict";
+/* ---------------- setup ---------------- */
+const SB_URL="https://insrwpvilbxabovyqrml.supabase.co", SB_KEY="sb_publishable_kh695O3WACqfoUU57mJPog_wLr6JMEF";
+const SB_SRC="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+const CP="store_products", CS="store_sales";
+const BRANCHES=["Jhankat","Khatima"];
+const ROLE_NAME={owner:"Owner",reception:"Reception",trainer:"Trainer"};
+const MODE_LABEL={Cash:"Cash",UPI:"Online (UPI)",Card:"Card",Split:"Cash + online"};
+const SOON_DAYS=30, LOW_QTY=2;
+let SB=null; const ME={id:"",name:"",role:""};
+const S={products:[],sales:[],view:"ov",branch:"",pf:"all",pq:"",sf:"all",sq:"",month:"",editP:null,editS:null,payS:null};
+
+/* ---------------- helpers ---------------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const inr=n=>"₹"+Math.round(Number(n)||0).toLocaleString("en-IN");
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>iso(new Date());
+const parse=s=>{ const [y,m,d]=String(s).split("-").map(Number); return new Date(y,m-1,d); };
+const fD=s=>s?parse(s).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"—";
+const days=s=>Math.round((parse(s)-parse(today()))/864e5);
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const sum=(a,f)=>a.reduce((t,x)=>t+(Number(f(x))||0),0);
+const can=()=>ME.role==="owner"||ME.role==="reception";
+const isOwner=()=>ME.role==="owner";
+let toastT; function toast(m){ let t=$(".toast"); if(!t){ t=document.createElement("div"); t.className="toast"; document.body.appendChild(t); } t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,3500); }
+function loadScript(src){ return new Promise((ok,no)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=()=>no(new Error("load")); document.head.appendChild(s); }); }
+function setErr(f,msg,name){ f.querySelector(".err").textContent=msg||""; f.querySelectorAll(".bad").forEach(x=>x.classList.remove("bad"));
+  if(name){ const el=f.elements[name]; const t=el&&(el.length&&!el.tagName?el[0].closest(".seg"):el); if(t){ t.classList.add("bad"); (t.focus||(()=>{})).call(t.tagName?t:t.querySelector("input")); } } return false; }
+function csvCell(v){ v=String(v??""); return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v; }
+function download(name,rows){ const csv="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\n"); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
+
+/* ---------------- product + sale maths ---------------- */
+function pStatus(p){ const q=Number(p.qty)||0;
+  if(p.expiry&&days(p.expiry)<0) return {k:"expired",t:`Expired ${fD(p.expiry)}`,c:"t-red"};
+  if(q<=0) return {k:"out",t:"Out of stock",c:"t-grey"};
+  if(p.expiry&&days(p.expiry)<=SOON_DAYS) return {k:"soon",t:days(p.expiry)===0?"Expires today":`Expires in ${days(p.expiry)} day${days(p.expiry)>1?"s":""}`,c:"t-amber"};
+  if(q<=LOW_QTY) return {k:"low",t:`Only ${q} left`,c:"t-amber"};
+  return {k:"ok",t:"In stock",c:"t-green"}; }
+const total=s=>(Number(s.qty)||0)*(Number(s.price)||0);
+const received=s=>sum(s.payments||[],p=>p.amount);
+const due=s=>Math.max(0,total(s)-received(s));
+const sStatus=s=>{ const r=received(s), t=total(s); return r<=0&&t>0?"unpaid":r<t?"part":"paid"; };
+const cashOf=p=>p.mode==="Cash"?p.amount:p.mode==="Split"?(p.cash||0):0;
+const onlineOf=p=>(p.mode==="UPI"||p.mode==="Card")?p.amount:p.mode==="Split"?(p.online||0):0;
+const modeText=p=>p.mode==="Split"?`Cash ${inr(p.cash)} + Online ${inr(p.online)}`:(MODE_LABEL[p.mode]||"—");
+const inBranch=x=>!S.branch||x.branch===S.branch;
+const prods=()=>S.products.filter(inBranch);
+const sales=()=>S.sales.filter(inBranch);
+const prodName=p=>p?`${p.name}${S.branch?"":` (${p.branch})`}`:"";
+
+/* ---------------- data (online database) ---------------- */
+async function loadAll(){
+  for(const [col,key] of [[CP,"products"],[CS,"sales"]]){ const rows=[];
+    for(let from=0;;from+=1000){ const {data,error}=await SB.from("records").select("id,data").eq("collection",col).order("id").range(from,from+999); if(error) throw error; rows.push(...data); if(data.length<1000) break; }
+    S[key]=rows.map(r=>({id:r.id,...r.data})); } }
+let chan=null;
+function subscribe(){ if(chan) return; chan=SB.channel("xbox-store").on("postgres_changes",{event:"*",schema:"public",table:"records"},p=>{
+  const r=p.eventType==="DELETE"?p.old:p.new; if(!r) return; const key=r.collection===CP?"products":r.collection===CS?"sales":null; if(!key) return;
+  const arr=S[key], i=arr.findIndex(x=>x.id===r.id);
+  if(p.eventType==="DELETE"){ if(i>=0) arr.splice(i,1); } else { const row={id:r.id,...r.data}; i>=0?arr[i]=row:arr.push(row); }
+  render(); }).subscribe(); }
+async function put(col,row){
+  if(!can()) throw new Error("Your login can’t make changes. Ask the owner.");
+  const {id,...data}=row; const {error}=await SB.from("records").upsert({collection:col,id,data,updated_at:new Date().toISOString()});
+  if(error) throw new Error(/permission|policy|42501/i.test(error.message)?"Your login isn’t allowed to save this. Ask the owner.":"Couldn’t save. Check the internet connection and try again.");
+  const key=col===CP?"products":"sales", arr=S[key], i=arr.findIndex(x=>x.id===id); i>=0?arr[i]={id,...data}:arr.push({id,...data}); }
+async function del(col,id){ const {error}=await SB.from("records").delete().eq("collection",col).eq("id",id); if(error) throw new Error("Couldn’t delete. Only the owner can delete.");
+  const key=col===CP?"products":"sales"; S[key]=S[key].filter(x=>x.id!==id); }
+
+/* ---------------- login ---------------- */
+async function boot(){
+  try{ await loadScript(SB_SRC); SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,storageKey:"xbox-dash-auth"}}); }
+  catch(e){ return showGate("Couldn’t reach the online database. Check the internet connection, then reload this page."); }
+  const {data}=await SB.auth.getSession(); if(!data.session) return showGate();
+  enter();
+}
+function showGate(msg){ $("#gate").classList.remove("hidden"); $("#g-msg").textContent=msg||""; setTimeout(()=>$("#g-login").elements.email.focus(),50); }
+async function enter(){
+  const {data:{user}}=await SB.auth.getUser(); if(!user) return showGate();
+  const {data,error}=await SB.from("staff").select("*").eq("user_id",user.id).maybeSingle();
+  if(error||!data){ await SB.auth.signOut(); return showGate("This login isn’t on the staff list. Ask the owner to add you in the gym dashboard’s Settings."); }
+  Object.assign(ME,{id:user.id,name:data.name,role:data.role});
+  try{ await loadAll(); }catch(e){ return showGate("Couldn’t load the records. Check the internet connection and log in again."); }
+  subscribe(); $("#gate").classList.add("hidden");
+  $("#uchip").classList.remove("hidden"); $("#u-name").textContent=ME.name; $("#u-av").textContent=(ME.name.trim()[0]||"?").toUpperCase(); $("#u-role").textContent=ROLE_NAME[ME.role]||ME.role;
+  $("#tab-hist").classList.toggle("hidden",!isOwner());
+  try{ const b=localStorage.getItem("xbox-store-branch"); if(b!==null&&(b===""||BRANCHES.includes(b))) setBranch(b,true); }catch(e){}
+  render();
+}
+$("#g-login").addEventListener("submit",async e=>{ e.preventDefault(); const f=e.target, em=f.email.value.trim(), pw=f.password.value;
+  if(!em) return setErr(f,"Enter your email.","email"); if(!pw) return setErr(f,"Enter your password.","password");
+  const b=f.querySelector("[type=submit]"); b.disabled=true; const {error}=await SB.auth.signInWithPassword({email:em,password:pw}); b.disabled=false;
+  if(error) return setErr(f,"Email or password isn’t right.","password"); setErr(f); $("#g-msg").textContent=""; enter(); });
+$("#u-out").onclick=async()=>{ try{ await SB.auth.signOut(); }catch(e){} location.reload(); };
+
+/* ---------------- navigation ---------------- */
+$$(".tabs [data-v]").forEach(b=>b.onclick=()=>{ S.view=b.dataset.v; render(); window.scrollTo(0,0); });
+function setBranch(b,quiet){ S.branch=b; $$(".branchsel button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.br===b)); try{ localStorage.setItem("xbox-store-branch",b); }catch(e){} if(!quiet) render(); }
+$$(".branchsel button").forEach(b=>b.onclick=()=>setBranch(b.dataset.br));
+
+function render(){
+  $$(".tabs [data-v]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S.view));
+  const M=$("#main");
+  if(S.view==="ov") M.innerHTML=viewOv();
+  else if(S.view==="prod") M.innerHTML=viewProd();
+  else if(S.view==="sales") M.innerHTML=viewSales();
+  else if(S.view==="hist"){ M.innerHTML=`<div class="vt"><div><h1>Store change history</h1><p>Every product, stock and sale change, who made it and when. Only the owner sees this.</p></div></div><div class="panel" id="hist-body"><div class="empty"><b>Loading…</b></div></div>`; loadHist(); }
+  $$("#main .can-write").forEach(x=>x.classList.toggle("hidden",!can()));
+  const dl=$("#custs"); dl.innerHTML=[...new Set(S.sales.map(s=>s.customer).filter(Boolean))].sort().map(c=>`<option value="${esc(c)}">`).join("");
+}
+const brLabel=()=>S.branch?`${S.branch} branch`:"both branches";
+
+/* ---------------- overview ---------------- */
+function viewOv(){
+  const P=prods(), SL=sales(), t=today(), mk=t.slice(0,7);
+  const stockVal=sum(P,p=>(p.qty||0)*(p.price||0)), units=sum(P,p=>p.qty);
+  const mSales=SL.filter(s=>(s.date||"").startsWith(mk)), tSales=SL.filter(s=>s.date===t);
+  const pays=SL.flatMap(s=>(s.payments||[]).map(p=>({...p,s}))), mPays=pays.filter(p=>(p.date||"").startsWith(mk)), tPays=pays.filter(p=>p.date===t);
+  const unpaid=SL.filter(s=>due(s)>0).sort((a,b)=>due(b)-due(a));
+  const expired=P.filter(p=>(p.qty||0)>0&&p.expiry&&days(p.expiry)<0), soon=P.filter(p=>(p.qty||0)>0&&p.expiry&&days(p.expiry)>=0&&days(p.expiry)<=SOON_DAYS).sort((a,b)=>a.expiry.localeCompare(b.expiry));
+  const low=P.filter(p=>(p.qty||0)<=LOW_QTY).sort((a,b)=>(a.qty||0)-(b.qty||0));
+  const li=(a,f,empty)=>a.length?`<ul class="list">${a.slice(0,8).map(f).join("")}</ul>${a.length>8?`<div class="empty" style="padding:10px">and ${a.length-8} more</div>`:""}`:`<div class="empty">${empty}</div>`;
+  const per=S.branch?"":`<div class="panel" style="margin-top:16px"><div class="ph"><h2>Branch comparison</h2></div><div class="tw"><table><thead><tr><th>Branch</th><th class="r">Stock value</th><th class="r">Units in stock</th><th class="r">Sales this month</th><th class="r">Collected this month</th><th class="r">Unpaid</th></tr></thead><tbody>${BRANCHES.map(b=>{ const p=S.products.filter(x=>x.branch===b), s=S.sales.filter(x=>x.branch===b); return `<tr><td><b>${b}</b></td><td class="r">${inr(sum(p,x=>(x.qty||0)*(x.price||0)))}</td><td class="r">${sum(p,x=>x.qty)}</td><td class="r">${inr(sum(s.filter(x=>(x.date||"").startsWith(mk)),total))}</td><td class="r">${inr(sum(s.flatMap(x=>x.payments||[]).filter(x=>(x.date||"").startsWith(mk)),x=>x.amount))}</td><td class="r">${inr(sum(s,due))}</td></tr>`; }).join("")}</tbody></table></div></div>`;
+  return `<div class="vt"><div><h1>Store overview</h1><p>Supplements stock and sales for ${brLabel()}.</p></div><div class="acts can-write"><button class="btn primary" type="button" data-act="sale">+ New sale</button><button class="btn" type="button" data-act="prod">+ Add product</button></div></div>
+  ${!S.products.length?`<div class="banner">No products yet. Start with <b>Add product</b> for each item on the shelf at each gym.</div>`:""}
+  <div class="kpis">
+    <div class="kpi"><div class="l">Stock value</div><div class="v">${inr(stockVal)}</div><div class="s">${units} units, ${P.length} products</div></div>
+    <div class="kpi"><div class="l">Sales this month</div><div class="v">${inr(sum(mSales,total))}</div><div class="s">${mSales.length} sale${mSales.length===1?"":"s"} · today ${inr(sum(tSales,total))}</div></div>
+    <div class="kpi"><div class="l">Collected this month</div><div class="v">${inr(sum(mPays,p=>p.amount))}</div><div class="s">Cash ${inr(sum(mPays,cashOf))} · Online ${inr(sum(mPays,onlineOf))}</div></div>
+    <div class="kpi ${unpaid.length?"warn":""}"><div class="l">Unpaid</div><div class="v">${inr(sum(unpaid,due))}</div><div class="s">${unpaid.length} sale${unpaid.length===1?"":"s"} not fully paid</div></div>
+    <div class="kpi ${expired.length+soon.length?"warn":""}"><div class="l">Expiry alerts</div><div class="v">${expired.length+soon.length}</div><div class="s">${expired.length} expired · ${soon.length} within ${SOON_DAYS} days</div></div>
+    <div class="kpi"><div class="l">Collected today</div><div class="v">${inr(sum(tPays,p=>p.amount))}</div><div class="s">Cash ${inr(sum(tPays,cashOf))} · Online ${inr(sum(tPays,onlineOf))}</div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="ph"><h2>Unpaid customers</h2><button class="btn sm" type="button" data-go="sales" data-sf="due">See all</button></div>${li(unpaid,s=>`<li><div><b>${esc(s.customer||"Customer")}</b><div class="m">${esc(s.product)} ×${s.qty} · ${fD(s.date)} · ${esc(s.branch)}</div></div><div style="text-align:right"><b style="color:var(--red)">${inr(due(s))}</b><div><button class="btn sm can-write" type="button" data-pay="${s.id}">Record payment</button></div></div></li>`,"<b>Nobody owes money.</b>All sales are fully paid.")}</div>
+    <div class="panel"><div class="ph"><h2>Expiry alerts</h2><button class="btn sm" type="button" data-go="prod" data-pf="exp">See all</button></div>${li([...expired,...soon],p=>{ const st=pStatus(p); return `<li><div><b>${esc(p.name)}</b><div class="m">${esc(p.branch)} · ${p.qty} in stock · expiry ${fD(p.expiry)}</div></div><span class="tag ${st.c}">${esc(st.t)}</span></li>`; },"<b>Nothing expiring soon.</b>No stock expires in the next 30 days.")}</div>
+    <div class="panel"><div class="ph"><h2>Low or out of stock</h2><button class="btn sm" type="button" data-go="prod" data-pf="low">See all</button></div>${li(low,p=>`<li><div><b>${esc(p.name)}</b><div class="m">${esc(p.branch)} · ${inr(p.price)} each</div></div><span class="tag ${(p.qty||0)<=0?"t-grey":"t-amber"}">${(p.qty||0)<=0?"Out of stock":`${p.qty} left`}</span></li>`,"<b>Stock levels are fine.</b>")}</div>
+    <div class="panel"><div class="ph"><h2>Latest sales</h2><button class="btn sm" type="button" data-go="sales">See all</button></div>${li(SL.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.created||"").localeCompare(a.created||"")),s=>`<li><div><b>${esc(s.customer||"Customer")}</b><div class="m">${esc(s.product)} ×${s.qty} · ${fD(s.date)} · ${esc(s.branch)}</div></div><div style="text-align:right"><b>${inr(total(s))}</b><div>${payTag(s)}</div></div></li>`,"<b>No sales yet.</b>")}</div>
+  </div>${per}`;
+}
+function payTag(s){ const st=sStatus(s); return st==="paid"?`<span class="tag t-green">Paid</span>`:st==="part"?`<span class="tag t-amber">${inr(due(s))} due</span>`:`<span class="tag t-red">Unpaid</span>`; }
+
+/* ---------------- products ---------------- */
+function viewProd(){
+  const q=S.pq.toLowerCase();
+  let P=prods().filter(p=>!q||(p.name+" "+(p.category||"")+" "+(p.notes||"")).toLowerCase().includes(q));
+  const f=S.pf; P=P.filter(p=>{ const k=pStatus(p).k; return f==="all"||(f==="exp"&&(k==="expired"||k==="soon"))||(f==="low"&&(k==="low"||k==="out"))||(f==="instock"&&(p.qty||0)>0); });
+  P.sort((a,b)=>a.name.localeCompare(b.name)||a.branch.localeCompare(b.branch));
+  const chips=[["all","All"],["instock","In stock"],["exp","Expired / expiring"],["low","Low / out of stock"]].map(([k,l])=>`<button type="button" class="chip" data-pf="${k}" aria-pressed="${S.pf===k}">${l}</button>`).join("");
+  const rowActs=p=>`<div class="rowacts"><button class="btn sm primary can-write" type="button" data-sell="${p.id}" ${(p.qty||0)<=0?"disabled":""}>Sell</button><button class="btn sm can-write" type="button" data-editp="${p.id}">Edit</button></div>`;
+  return `<div class="vt"><div><h1>Products &amp; stock</h1><p>What’s on the shelf at ${brLabel()}: price, quantity and expiry.</p></div><div class="acts"><button class="btn primary can-write" type="button" data-act="prod">+ Add product</button><button class="btn" type="button" data-act="dlprod">Download (Excel)</button></div></div>
+  <div class="panel"><div class="fbar"><input type="search" id="pq" placeholder="Search products" value="${esc(S.pq)}" aria-label="Search products">${chips}</div>
+  ${P.length?`<div class="tw cardable"><table><thead><tr><th>Product</th><th>Category</th>${S.branch?"":"<th>Branch</th>"}<th class="r">Price</th><th class="r">In stock</th><th class="r">Stock value</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>${P.map(p=>{ const st=pStatus(p); return `<tr><td><b>${esc(p.name)}</b>${p.notes?`<div class="m">${esc(p.notes)}</div>`:""}</td><td>${esc(p.category||"—")}</td>${S.branch?"":`<td>${esc(p.branch)}</td>`}<td class="r">${inr(p.price)}</td><td class="r">${p.qty||0}</td><td class="r">${inr((p.qty||0)*(p.price||0))}</td><td>${fD(p.expiry)}</td><td><span class="tag ${st.c}">${esc(st.t)}</span></td><td>${rowActs(p)}</td></tr>`; }).join("")}</tbody>
+    <tfoot><tr><td colspan="${S.branch?3:4}">${P.length} products</td><td class="r">${sum(P,p=>p.qty)}</td><td class="r">${inr(sum(P,p=>(p.qty||0)*(p.price||0)))}</td><td colspan="3"></td></tr></tfoot></table></div>
+    <div class="cards">${P.map(p=>{ const st=pStatus(p); return `<div class="card"><div class="t"><span>${esc(p.name)}</span><span>${inr(p.price)}</span></div><div class="d">${esc(p.category||"")}${p.category?" · ":""}${esc(p.branch)} · ${p.qty||0} in stock · expiry ${fD(p.expiry)}</div><div style="margin-top:6px"><span class="tag ${st.c}">${esc(st.t)}</span></div>${rowActs(p)}</div>`; }).join("")}</div>`
+  :`<div class="empty"><b>${S.products.length?"No products match.":"No products yet."}</b>${S.products.length?"Try another filter or search.":"Tap Add product to put your first item on the list."}</div>`}</div>`;
+}
+
+/* ---------------- sales ---------------- */
+function monthOpts(){ const ms=[...new Set(S.sales.map(s=>(s.date||"").slice(0,7)).filter(Boolean))].sort().reverse(); const cur=today().slice(0,7); if(!ms.includes(cur)) ms.unshift(cur);
+  return `<option value="">All dates</option>`+ms.map(m=>`<option value="${m}" ${S.month===m?"selected":""}>${parse(m+"-01").toLocaleDateString("en-IN",{month:"long",year:"numeric"})}</option>`).join(""); }
+function filteredSales(){ const q=S.sq.toLowerCase();
+  return sales().filter(s=>(!S.month||(s.date||"").startsWith(S.month))&&(S.sf==="all"||(S.sf==="due"&&due(s)>0)||(S.sf==="paid"&&due(s)===0))&&(!q||(s.customer+" "+s.product+" "+(s.phone||"")+" "+(s.notes||"")).toLowerCase().includes(q)))
+    .sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.created||"").localeCompare(a.created||"")); }
+function viewSales(){
+  const L=filteredSales();
+  const chips=[["all","All"],["paid","Paid"],["due","Unpaid / part paid"]].map(([k,l])=>`<button type="button" class="chip" data-sf="${k}" aria-pressed="${S.sf===k}">${l}</button>`).join("");
+  const modes=s=>(s.payments||[]).length?[...new Set(s.payments.map(modeText))].join(", "):"—";
+  const acts=s=>`<div class="rowacts">${due(s)>0?`<button class="btn sm primary can-write" type="button" data-pay="${s.id}">Record payment</button>`:""}<button class="btn sm can-write" type="button" data-edits="${s.id}">Edit</button></div>`;
+  return `<div class="vt"><div><h1>Sales</h1><p>Every product sold at ${brLabel()}: customer, price, payment and mode.</p></div><div class="acts"><button class="btn primary can-write" type="button" data-act="sale">+ New sale</button><button class="btn" type="button" data-act="dlsales">Download (Excel)</button></div></div>
+  <div class="panel"><div class="fbar"><input type="search" id="sq" placeholder="Search customer or product" value="${esc(S.sq)}" aria-label="Search sales"><select id="month" aria-label="Month">${monthOpts()}</select>${chips}</div>
+  ${L.length?`<div class="tw cardable"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th>${S.branch?"":"<th>Branch</th>"}<th class="r">Qty</th><th class="r">Price</th><th class="r">Total</th><th>Payment</th><th>Mode</th><th>Sold by</th><th></th></tr></thead><tbody>${L.map(s=>`<tr><td>${fD(s.date)}</td><td><b>${esc(s.customer||"—")}</b>${s.phone?`<div class="m">${esc(s.phone)}</div>`:""}</td><td>${esc(s.product)}${s.notes?`<div class="m">${esc(s.notes)}</div>`:""}</td>${S.branch?"":`<td>${esc(s.branch)}</td>`}<td class="r">${s.qty}</td><td class="r">${inr(s.price)}</td><td class="r"><b>${inr(total(s))}</b></td><td>${payTag(s)}${sStatus(s)==="part"?`<div class="m">${inr(received(s))} received</div>`:""}</td><td>${esc(modes(s))}</td><td>${esc(s.soldBy||"—")}</td><td>${acts(s)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="${S.branch?4:5}">${L.length} sale${L.length===1?"":"s"}</td><td></td><td class="r">${inr(sum(L,total))}</td><td colspan="4">Received ${inr(sum(L,received))} · Due ${inr(sum(L,due))}</td></tr></tfoot></table></div>
+    <div class="cards">${L.map(s=>`<div class="card"><div class="t"><span>${esc(s.customer||"Customer")}</span><span>${inr(total(s))}</span></div><div class="d">${esc(s.product)} ×${s.qty} at ${inr(s.price)} · ${fD(s.date)} · ${esc(s.branch)}</div><div class="d">${payTag(s)} ${esc(modes(s))}${s.soldBy?` · by ${esc(s.soldBy)}`:""}</div>${acts(s)}</div>`).join("")}</div>`
+  :`<div class="empty"><b>${S.sales.length?"No sales match.":"No sales yet."}</b>${S.sales.length?"Try another month, filter or search.":"Tap New sale when a customer buys something."}</div>`}</div>`;
+}
+
+/* ---------------- page clicks ---------------- */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button,[data-close]"); if(!t) return;
+  if(t.matches("[data-close]")){ t.closest("dialog").close(); return; }
+  if(t.dataset.go){ S.view=t.dataset.go; if(t.dataset.sf) S.sf=t.dataset.sf; if(t.dataset.pf) S.pf=t.dataset.pf; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.pf&&t.classList.contains("chip")){ S.pf=t.dataset.pf; render(); return; }
+  if(t.dataset.sf&&t.classList.contains("chip")){ S.sf=t.dataset.sf; render(); return; }
+  if(t.dataset.act==="prod") return openProd();
+  if(t.dataset.act==="sale") return openSale();
+  if(t.dataset.act==="dlprod") return dlProducts();
+  if(t.dataset.act==="dlsales") return dlSales();
+  if(t.dataset.editp) return openProd(t.dataset.editp);
+  if(t.dataset.sell) return openSale(null,t.dataset.sell);
+  if(t.dataset.edits) return openSale(t.dataset.edits);
+  if(t.dataset.pay) return openPay(t.dataset.pay);
+});
+document.addEventListener("input",e=>{ if(e.target.id==="pq"){ S.pq=e.target.value; const p=e.target.selectionStart; render(); const n=$("#pq"); n.focus(); n.setSelectionRange(p,p); }
+  if(e.target.id==="sq"){ S.sq=e.target.value; const p=e.target.selectionStart; render(); const n=$("#sq"); n.focus(); n.setSelectionRange(p,p); } });
+document.addEventListener("change",e=>{ if(e.target.id==="month"){ S.month=e.target.value; render(); } });
+$$("dialog").forEach(d=>d.addEventListener("click",e=>{ if(e.target===d) d.close(); }));
+/* forms in sandboxed or older browsers: make Enter / submit buttons always submit */
+document.addEventListener("click",e=>{ const b=e.target.closest("button[type=submit]"); if(!b) return; const f=b.form; if(!f) return; e.preventDefault(); f.dispatchEvent(new Event("submit",{cancelable:true,bubbles:true})); },true);
+
+/* ---------------- product form ---------------- */
+function openProd(id){
+  const f=$("#f-prod"), p=id?S.products.find(x=>x.id===id):null; S.editP=p?p.id:null; f.reset(); setErr(f);
+  $("#prod-title").textContent=p?`Edit ${p.name}`:"Add product"; $("#prod-del").classList.toggle("hidden",!p||!isOwner());
+  if(p){ f.name.value=p.name; f.category.value=p.category||""; f.price.value=p.price??""; f.cost.value=p.cost??""; f.qty.value=p.qty??0; f.expiry.value=p.expiry||""; f.notes.value=p.notes||""; [...f.branch].forEach(r=>r.checked=r.value===p.branch); }
+  else if(S.branch) [...f.branch].forEach(r=>r.checked=r.value===S.branch);
+  $("#d-prod").showModal(); setTimeout(()=>f.name.focus(),30);
+}
+$("#f-prod").addEventListener("submit",async e=>{ e.preventDefault(); const f=e.target;
+  const name=f.name.value.trim(), branch=f.branch.value, price=f.price.value, qty=f.qty.value;
+  if(!name) return setErr(f,"Enter the product name.","name");
+  if(!branch) return setErr(f,"Choose the gym branch where it’s kept.","branch");
+  if(price===""||Number(price)<0) return setErr(f,"Enter the selling price.","price");
+  if(qty===""||Number(qty)<0||!Number.isInteger(Number(qty))) return setErr(f,"Enter how many are in stock (0 or more).","qty");
+  if(!f.expiry.value) return setErr(f,"Enter the expiry date printed on the pack.","expiry");
+  const old=S.editP?S.products.find(x=>x.id===S.editP):null;
+  const row={...(old||{}),id:old?old.id:uid("p"),name,category:f.category.value.trim(),branch,price:Number(price),cost:f.cost.value===""?null:Number(f.cost.value),qty:Number(qty),expiry:f.expiry.value,notes:f.notes.value.trim(),updatedBy:ME.name};
+  if(!old){ row.created=new Date().toISOString(); row.addedBy=ME.name; }
+  const b=f.querySelector("[type=submit]"); b.disabled=true;
+  try{ await put(CP,row); $("#d-prod").close(); toast(old?`${name} saved.`:`${name} added to ${branch}.`); render(); }catch(x){ setErr(f,x.message); } finally{ b.disabled=false; }
+});
+$("#prod-del").onclick=async()=>{ const p=S.products.find(x=>x.id===S.editP); if(!p) return;
+  if(!confirm(`Delete ${p.name} (${p.branch}) from the product list? Past sales stay in the sales list.`)) return;
+  try{ await del(CP,p.id); $("#d-prod").close(); toast(`${p.name} deleted.`); render(); }catch(x){ toast(x.message); } };
+
+/* ---------------- sale form ---------------- */
+function fillProducts(f,keep){ const br=f.branch.value, cur=keep||f.product.value;
+  const P=S.products.filter(p=>p.branch===br&&((p.qty||0)>0||p.id===cur)).sort((a,b)=>a.name.localeCompare(b.name));
+  f.product.innerHTML=`<option value="">${br?(P.length?"Choose a product":"No products in stock at "+br):"Choose the branch first"}</option>`+P.map(p=>`<option value="${p.id}">${esc(p.name)} · ${inr(p.price)} · ${p.qty||0} in stock</option>`).join("");
+  f.product.value=P.some(p=>p.id===cur)?cur:""; }
+function payMode(f){ const split=f.mode&&f.mode.value==="Split"; f.querySelectorAll(".split-only").forEach(x=>x.classList.toggle("hidden",!split)); }
+function saleUpd(f,src){
+  const p=S.products.find(x=>x.id===f.product.value), old=S.editS?S.sales.find(x=>x.id===S.editS):null;
+  if(src==="product"&&p) f.price.value=p.price;
+  const qty=Number(f.qty.value)||0, price=Number(f.price.value)||0, tot=qty*price, st=f.status.value;
+  const info=$("#sale-pinfo"); if(p){ const stt=pStatus(p), avail=(p.qty||0)+(old&&old.productId===p.id?Number(old.qty)||0:0); info.innerHTML=`${avail} available · expiry ${fD(p.expiry)}${stt.k==="expired"||stt.k==="soon"?` · <b style="color:var(--red)">${esc(stt.t)}</b>`:""}`; } else info.textContent="";
+  $("#sale-total").textContent=qty&&price?`Total: ${inr(tot)}  (${qty} × ${inr(price)})`:"Total: —";
+  f.querySelectorAll(".pay-only").forEach(x=>x.classList.toggle("hidden",st==="unpaid"));
+  if(st==="paid") f.received.value=tot; if(st==="unpaid") f.received.value="";
+  f.received.readOnly=st==="paid";
+  if(f.mode.value==="Split"&&src!=="split"&&st!=="unpaid"&&(f.cash.value!==""||f.online.value!=="")&&st==="part") f.received.value=(Number(f.cash.value)||0)+(Number(f.online.value)||0);
+  if(src==="split"&&st==="part") f.received.value=(Number(f.cash.value)||0)+(Number(f.online.value)||0);
+  payMode(f);
+  const rec=st==="unpaid"?0:Number(f.received.value)||0, bal=$("#sale-bal");
+  bal.classList.toggle("hidden",!(tot&&rec<tot)); bal.textContent=st==="unpaid"?`Unpaid: ${inr(tot)} will show as due from ${f.customer.value.trim()||"this customer"}.`:`${inr(tot-rec)} will show as due.`;
+}
+function openSale(id,productId){
+  const f=$("#f-sale"), s=id?S.sales.find(x=>x.id===id):null; S.editS=s?s.id:null; f.reset(); setErr(f);
+  $("#sale-title").textContent=s?"Edit sale":"New sale"; $("#sale-del").classList.toggle("hidden",!s||!isOwner());
+  $("#sale-sub").textContent=s?"Changing the product or quantity adjusts the stock automatically.":"Stock goes down automatically when you save.";
+  const p0=productId?S.products.find(x=>x.id===productId):null;
+  const br=s?s.branch:p0?p0.branch:S.branch; [...f.branch].forEach(r=>r.checked=r.value===br);
+  fillProducts(f,s?s.productId:p0?p0.id:"");
+  f.date.value=s?s.date:today(); f.qty.value=s?s.qty:1;
+  if(s){ f.price.value=s.price; f.customer.value=s.customer||""; f.phone.value=s.phone||""; f.notes.value=s.notes||"";
+    const st=sStatus(s); [...f.status].forEach(r=>r.checked=r.value===st); const p1=(s.payments||[])[0];
+    if(p1){ f.received.value=received(s); [...f.mode].forEach(r=>r.checked=r.value===p1.mode); if(p1.mode==="Split"){ f.cash.value=p1.cash||""; f.online.value=p1.online||""; } }
+  } else { if(p0) f.price.value=p0.price; [...f.status].forEach(r=>r.checked=r.value==="paid"); }
+  saleUpd(f); $("#d-sale").showModal(); setTimeout(()=>(f.product.value?f.customer:f.product).focus(),30);
+}
+(()=>{ const f=$("#f-sale");
+  f.addEventListener("change",e=>{ const n=e.target.name; if(n==="branch"){ fillProducts(f); saleUpd(f,"product"); } else if(n==="product") saleUpd(f,"product"); else saleUpd(f); });
+  f.addEventListener("input",e=>{ const n=e.target.name; if(n==="cash"||n==="online") saleUpd(f,"split"); else if(n==="qty"||n==="price"||n==="received"||n==="customer") saleUpd(f); });
+})();
+function readPayFields(f,amount){ const mode=f.mode.value; if(!mode) return {err:"Choose the mode of payment.",field:"mode"};
+  const p={mode,amount}; if(mode==="Split"){ const c=Number(f.cash.value)||0, o=Number(f.online.value)||0; if(!(c>0&&o>0)) return {err:"Enter both the cash part and the online part.",field:"cash"}; if(c+o!==amount) return {err:`Cash and online parts must add up to ${inr(amount)}.`,field:"cash"}; p.cash=c; p.online=o; } return p; }
+$("#f-sale").addEventListener("submit",async e=>{ e.preventDefault(); const f=e.target;
+  const old=S.editS?S.sales.find(x=>x.id===S.editS):null;
+  const br=f.branch.value, p=S.products.find(x=>x.id===f.product.value), qty=Number(f.qty.value), price=f.price.value, cust=f.customer.value.trim(), st=f.status.value;
+  if(!br) return setErr(f,"Choose the gym branch.","branch");
+  if(!p) return setErr(f,"Choose the product sold.","product");
+  if(!Number.isInteger(qty)||qty<1) return setErr(f,"Enter the quantity (1 or more).","qty");
+  const avail=(p.qty||0)+(old&&old.productId===p.id?Number(old.qty)||0:0);
+  if(qty>avail) return setErr(f,`Only ${avail} in stock at ${br}. Update the stock in Products first if more arrived.`,"qty");
+  if(price===""||Number(price)<0) return setErr(f,"Enter the price.","price");
+  if(!cust) return setErr(f,"Enter the customer’s name.","customer");
+  if(f.phone.value.trim()&&f.phone.value.replace(/\D/g,"").length<10) return setErr(f,"Enter a 10-digit mobile number, or leave it empty.","phone");
+  if(!f.date.value) return setErr(f,"Choose the sale date.","date");
+  if(!st) return setErr(f,"Choose Paid, Part paid or Unpaid.","status");
+  const tot=qty*Number(price); let payments=[];
+  if(st!=="unpaid"){ const rec=Number(f.received.value);
+    if(f.received.value===""||!(rec>0)) return setErr(f,"Enter the amount received.","received");
+    if(rec>tot) return setErr(f,`The amount received can’t be more than the total, ${inr(tot)}.`,"received");
+    if(st==="part"&&rec>=tot) return setErr(f,"That’s the full amount. Choose Paid instead.","status");
+    const P=readPayFields(f,rec); if(P.err) return setErr(f,P.err,P.field);
+    const later=old?(old.payments||[]).slice(1):[]; payments=[{...P,date:f.date.value,by:ME.name},...later];
+    if(sum(payments,x=>x.amount)>tot) payments=[payments[0]]; }
+  else if(old&&(old.payments||[]).length) return setErr(f,"This sale already has payments recorded. Choose Part paid or Paid.","status");
+  const row={...(old||{}),id:old?old.id:uid("s"),date:f.date.value,branch:br,productId:p.id,product:p.name,category:p.category||"",expiry:p.expiry||"",qty,price:Number(price),customer:cust,phone:f.phone.value.trim(),notes:f.notes.value.trim(),payments,updatedBy:ME.name};
+  if(!old){ row.created=new Date().toISOString(); row.soldBy=ME.name; }
+  const b=f.querySelector("[type=submit]"); b.disabled=true;
+  try{
+    // stock: give back the old quantity, then take the new one
+    if(old){ const op=S.products.find(x=>x.id===old.productId); if(op&&op.id!==p.id) await put(CP,{...op,qty:(op.qty||0)+(Number(old.qty)||0)}); }
+    const np=S.products.find(x=>x.id===p.id); const back=old&&old.productId===p.id?Number(old.qty)||0:0;
+    await put(CP,{...np,qty:(np.qty||0)+back-qty});
+    await put(CS,row);
+    $("#d-sale").close(); toast(old?"Sale updated.":`Sale saved: ${p.name} ×${qty} to ${cust}${due(row)?`, ${inr(due(row))} due`:""}.`); render();
+  }catch(x){ setErr(f,x.message); } finally{ b.disabled=false; }
+});
+$("#sale-del").onclick=async()=>{ const s=S.sales.find(x=>x.id===S.editS); if(!s) return;
+  if(!confirm(`Delete this sale (${s.product} ×${s.qty} to ${s.customer})? The ${s.qty} unit${s.qty>1?"s go":" goes"} back into stock.`)) return;
+  try{ const p=S.products.find(x=>x.id===s.productId); if(p) await put(CP,{...p,qty:(p.qty||0)+(Number(s.qty)||0)}); await del(CS,s.id); $("#d-sale").close(); toast("Sale deleted and stock put back."); render(); }catch(x){ toast(x.message); } };
+
+/* ---------------- payment form ---------------- */
+function openPay(id){ const s=S.sales.find(x=>x.id===id); if(!s) return; S.payS=id; const f=$("#f-pay"); f.reset(); setErr(f);
+  $("#pay-title").textContent=`Payment from ${s.customer||"customer"}`; $("#pay-sub").textContent=`${s.product} ×${s.qty} on ${fD(s.date)} · total ${inr(total(s))} · received ${inr(received(s))} · due ${inr(due(s))}`;
+  f.amount.value=due(s); f.date.value=today(); payMode(f); $("#d-pay").showModal(); }
+$("#f-pay").addEventListener("change",e=>payMode(e.currentTarget));
+$("#f-pay").addEventListener("input",e=>{ const f=e.currentTarget; if((e.target.name==="cash"||e.target.name==="online")&&f.mode.value==="Split") f.amount.value=(Number(f.cash.value)||0)+(Number(f.online.value)||0); });
+$("#f-pay").addEventListener("submit",async e=>{ e.preventDefault(); const f=e.target, s=S.sales.find(x=>x.id===S.payS); if(!s) return;
+  const amt=Number(f.amount.value); if(!(amt>0)) return setErr(f,"Enter the amount received.","amount");
+  if(amt>due(s)) return setErr(f,`Only ${inr(due(s))} is due.`,"amount");
+  if(!f.date.value) return setErr(f,"Choose the payment date.","date");
+  const P=readPayFields(f,amt); if(P.err) return setErr(f,P.err,P.field);
+  const row={...s,payments:[...(s.payments||[]),{...P,date:f.date.value,by:ME.name}],updatedBy:ME.name};
+  const b=f.querySelector("[type=submit]"); b.disabled=true;
+  try{ await put(CS,row); $("#d-pay").close(); toast(due(row)?`${inr(amt)} received. ${inr(due(row))} still due.`:`Paid in full. Thank you, ${s.customer}!`); render(); }catch(x){ setErr(f,x.message); } finally{ b.disabled=false; }
+});
+
+/* ---------------- downloads ---------------- */
+function dlProducts(){ const P=prods().slice().sort((a,b)=>a.name.localeCompare(b.name));
+  download(`xbox-store-products-${S.branch||"both"}-${today()}.csv`,[["Product","Category","Branch","Selling price","Cost price","In stock","Stock value","Expiry date","Status","Notes"],...P.map(p=>[p.name,p.category||"",p.branch,p.price,p.cost??"",p.qty||0,(p.qty||0)*(p.price||0),p.expiry||"",pStatus(p).t,p.notes||""])]); }
+function dlSales(){ const L=filteredSales();
+  download(`xbox-store-sales-${S.branch||"both"}-${S.month||"all"}-${today()}.csv`,[["Date","Customer","Mobile","Product","Category","Branch","Qty","Price each","Total","Received","Due","Payment","Mode of payment","Cash","Online","Sold by","Notes"],
+    ...L.map(s=>[s.date,s.customer,s.phone||"",s.product,s.category||"",s.branch,s.qty,s.price,total(s),received(s),due(s),{paid:"Paid",part:"Part paid",unpaid:"Unpaid"}[sStatus(s)],[...new Set((s.payments||[]).map(modeText))].join(" | "),sum(s.payments||[],cashOf),sum(s.payments||[],onlineOf),s.soldBy||"",s.notes||""])]); }
+
+/* ---------------- history (owner) ---------------- */
+const LBL={name:"Name",category:"Category",branch:"Branch",price:"Price",cost:"Cost price",qty:"Quantity",expiry:"Expiry",notes:"Notes",customer:"Customer",phone:"Mobile",date:"Date",product:"Product"};
+const fmt=(k,v)=>v==null||v===""?"—":(k==="price"||k==="cost")?inr(v):/^\d{4}-\d\d-\d\d$/.test(String(v))?fD(v):String(v);
+function describe(r){ const a=r.after||{}, b=r.before||{}, out=[]; let title="";
+  if(r.collection===CP){ const n=a.name||b.name||"product";
+    if(r.action==="add") { title=`Added product ${n} (${a.branch})`; out.push(`${a.qty} in stock at ${inr(a.price)}, expiry ${fD(a.expiry)}`); }
+    else if(r.action==="delete") title=`Deleted product ${n} (${b.branch})`;
+    else { title=`Changed ${n} (${a.branch||b.branch})`; Object.keys(LBL).forEach(k=>{ if(JSON.stringify(a[k]??null)!==JSON.stringify(b[k]??null)) out.push(`${LBL[k]}: ${fmt(k,b[k])} → ${fmt(k,a[k])}`); });
+      if(out.length===1&&out[0].startsWith("Quantity")) title=`Stock of ${n} (${a.branch}) changed`; } }
+  else { const n=`${a.product||b.product||"product"} ×${a.qty||b.qty||""} to ${a.customer||b.customer||"customer"}`;
+    if(r.action==="add"){ title=`Sale: ${n} (${a.branch})`; out.push(`${inr(total(a))}, ${(a.payments||[]).length?`paid ${inr(received(a))} by ${[...new Set(a.payments.map(modeText))].join(", ")}`:"unpaid"}`); }
+    else if(r.action==="delete") title=`Deleted sale: ${n}`;
+    else { const pa=(a.payments||[]).length, pb=(b.payments||[]).length;
+      if(pa>pb){ const p=a.payments[pa-1]; title=`Payment ${inr(p.amount)} from ${a.customer}`; out.push(`${modeText(p)}, ${due(a)?`${inr(due(a))} still due`:"now fully paid"}`); }
+      else { title=`Edited sale: ${n}`; ["qty","price","customer","phone","date","product","branch"].forEach(k=>{ if(JSON.stringify(a[k]??null)!==JSON.stringify(b[k]??null)) out.push(`${LBL[k]||k}: ${fmt(k,b[k])} → ${fmt(k,a[k])}`); }); } } }
+  return {title,out}; }
+async function loadHist(){ const {data,error}=await SB.from("audit_log").select("*").in("collection",[CP,CS]).order("at",{ascending:false}).limit(1000);
+  const box=$("#hist-body"); if(!box) return;
+  if(error){ box.innerHTML=`<div class="empty"><b>Couldn’t load the history.</b>${esc(error.message)}</div>`; return; }
+  const rows=data.filter(r=>!S.branch||((r.after||r.before||{}).branch===S.branch));
+  if(!rows.length){ box.innerHTML=`<div class="empty"><b>No changes yet.</b>Changes to products and sales will appear here.</div>`; return; }
+  box.innerHTML=rows.map(r=>{ const d=new Date(r.at), x=describe(r); return `<div class="hrow"><div class="m" style="color:var(--muted);font-size:14px">${d.toLocaleDateString("en-IN",{day:"numeric",month:"short"})}<br>${d.toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"})}</div><div><b>${esc(x.title)}</b>${x.out.length?`<ul>${x.out.map(o=>`<li>${esc(o)}</li>`).join("")}</ul>`:""}</div><div style="text-align:right;font-size:14px"><b>${esc(r.actor_name||"Unknown")}</b><div style="color:var(--muted)">${esc(ROLE_NAME[r.actor_role]||r.actor_role||"")}</div></div></div>`; }).join(""); }
+
+boot();
+})();
+</script>
+</body>
+</html>
